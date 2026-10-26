@@ -25,22 +25,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             [$username]
         );
 
-        if (pg_num_rows($result) > 0) {
-            $errors[] = "Username already exists";
+        if (!$result) {
+            $errors[] = "Database query failed";
         } else {
-            $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+            $user = pg_fetch_assoc($result);
 
-            $result = pg_query_params(
-                $conn,
-                'INSERT INTO users (username, password) VALUES ($1, $2)',
-                [$username, $hashedPassword]
-            );
+            if ($user && password_verify($password, $user["password"])) {
+                session_regenerate_id(true);
 
-            if ($result) {
-                header("Location: index.php");
+                $_SESSION["username"] = $user["username"];
+
+                header("Location: dashboard.php");
                 exit();
             } else {
-                $errors[] = "Registration failed";
+                $errors[] = "Invalid username or password";
             }
         }
     }
@@ -52,27 +50,24 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register</title>
+    <title>Login</title>
 </head>
 <body>
-    <h3>Register</h3>
 
-    <form method="POST">
-        <label for="username">Enter Username:
-            <input type="text" name="username" id="username"
-                   placeholder="Username" required>
-        </label>
+    <h3>Login</h3>
 
-        <br><br>
-
-        <label for="password">Enter Password:
-            <input type="password" name="password" id="password"
-                   placeholder="Password" required>
-        </label>
+    <form method="POST" action="">
+        <label for="username">Enter Username:</label>
+        <input type="text" name="username" id="username" required>
 
         <br><br>
 
-        <button type="submit">Register</button>
+        <label for="password">Enter Password:</label>
+        <input type="password" name="password" id="password" required>
+
+        <br><br>
+
+        <button type="submit">Login</button>
     </form>
 
     <?php foreach ($errors as $error) { ?>
@@ -81,6 +76,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         </p>
     <?php } ?>
 
-    <p>Already have an account? <a href="index.php">Login here</a></p>
+    <p>Don't have an account?
+        <a href="register.php">Register here</a>
+    </p>
+
 </body>
 </html>

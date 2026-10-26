@@ -25,16 +25,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             [$username]
         );
 
-        $user = pg_fetch_assoc($result);
-
-        if ($user && password_verify($password, $user['password'])) {
-            session_regenerate_id(true);
-            $_SESSION['username'] = $user['username'];
-
-            header("Location: dashboard.php");
-            exit();
+        if (!$result) {
+            $errors[] = "Database query failed";
         } else {
-            $errors[] = "Invalid username or password";
+            $user = pg_fetch_assoc($result);
+
+            if ($user && password_verify($password, $user["password"])) {
+                session_regenerate_id(true);
+
+                $_SESSION["username"] = $user["username"];
+
+                header("Location: dashboard.php");
+                exit();
+            } else {
+                $errors[] = "Invalid username or password";
+            }
         }
     }
 }
@@ -48,20 +53,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <title>Login</title>
 </head>
 <body>
-    <h3>Login System</h3>
 
-    <form method="POST">
-        <label for="username">Enter Username:
-            <input type="text" name="username" id="username"
-                   placeholder="Username" required>
-        </label>
+    <h3>Login</h3>
 
-        <br><br>
+    <form method="POST" action="">
+        <label for="username">Enter Username:</label>
+        <input type="text" name="username" id="username" required>
 
-        <label for="password">Enter Password:
-            <input type="password" name="password" id="password"
-                   placeholder="Password" required>
-        </label>
+        <br><br>    
+
+        <label for="password">Enter Password:</label>
+        <input type="password" name="password" id="password" required>
 
         <br><br>
 
@@ -74,6 +76,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         </p>
     <?php } ?>
 
-    <p>Don't have an account? <a href="register.php">Register here</a></p>
+    <p>Don't have an account?
+        <a href="register.php">Register here</a>
+    </p>
+
 </body>
 </html>
